@@ -51,6 +51,9 @@ from dataset import (
 )
 from defense import defend
 
+# Custom imports
+from config import config
+
 # --------------------------------------------------------------------------- #
 # 固定评测参数
 # --------------------------------------------------------------------------- #
@@ -376,13 +379,13 @@ def _ask_agent_config():
 def make_agent_fn(judge_mode: str = "mock"):
     if judge_mode == "api":
         base_url, api_key, model = _ask_agent_config()
-        print(f"[agent] 使用真实大模型 Agent: model={model}, base_url={base_url}", flush=True)
+        print(f"[agent] Using real large model Agent: model={model}, base_url={base_url}" if config.is_en else f"[agent] 使用真实大模型 Agent: model={model}, base_url={base_url}", flush=True)
 
         def factory(env):
             return OpenAICompatAgent(env, base_url=base_url, api_key=api_key or "sk-none",
                                      model=model)
         return factory
-    print("[agent] 使用离线模拟 Agent（MockAgent，确定性规则，无需 API）", flush=True)
+    print("[agent] Using offline simulated Agent (MockAgent, deterministic rules, no API required)" if config.is_en else "[agent] 使用离线模拟 Agent（MockAgent，确定性规则，无需 API）", flush=True)
     return lambda env: MockAgent(env)
 
 
@@ -459,7 +462,7 @@ def evaluate(stage: str = "attack", judge_mode: str = "mock",
     fpr_info = measure_false_positive(defend, ALL_TASKS)
 
     result = {
-        "benchmark": "MailMate 个人邮箱助手攻防",
+        "benchmark": "MailMate Personal Email Assistant Attack-Defense" if config.is_en else "MailMate 个人邮箱助手攻防",
         "stage": stage,
         "judge_mode": judge_mode,
         "n_matches": n_matches,
@@ -492,33 +495,63 @@ def evaluate(stage: str = "attack", judge_mode: str = "mock",
 def print_report(result: dict):
     line = "=" * 70
     print("\n" + line)
-    print(f"基准: {result['benchmark']}  |  阶段: {result['stage']}  |  "
-          f"Agent: {result['judge_mode']}")
+    if config.is_en:
+        print(f"Benchmark: {result['benchmark']}  |  Stage: {result['stage']}  |  "
+              f"Agent: {result['judge_mode']}")
+    else:
+        print(f"基准: {result['benchmark']}  |  阶段: {result['stage']}  |  "
+              f"Agent: {result['judge_mode']}")
     print(line)
-    print(f"对阵 {result['n_matches']} 场（seed={result['seed']}） | 基线任务 "
-          f"{result['n_tasks_public']} 公开 + {result['n_tasks_hidden']} 隐藏")
+    if config.is_en:
+        print(f"Matches {result['n_matches']} (seed={result['seed']}) | Baseline tasks "
+              f"{result['n_tasks_public']} public + {result['n_tasks_hidden']} hidden")
+    else:
+        print(f"对阵 {result['n_matches']} 场（seed={result['seed']}） | 基线任务 "
+              f"{result['n_tasks_public']} 公开 + {result['n_tasks_hidden']} 隐藏")
     print("-" * 70)
     for key, cell in result["cells"].items():
-        print(f"[对阵] {key:52s} 攻击胜率={cell['attack_win_rate']:.4f}  "
-              f"防御胜率={cell['defense_win_rate']:.4f}  "
-              f"注入有效={cell['injection_success_rate']:.3f}  "
-              f"平均调用={cell['mean_tool_calls']}")
+        if config.is_en:
+            print(f"[Match] {key:52s} AttackWinRate={cell['attack_win_rate']:.4f}  "
+                  f"DefenseWinRate={cell['defense_win_rate']:.4f}  "
+                  f"InjectionSuccess={cell['injection_success_rate']:.3f}  "
+                  f"MeanCalls={cell['mean_tool_calls']}")
+        else:
+            print(f"[对阵] {key:52s} 攻击胜率={cell['attack_win_rate']:.4f}  "
+                  f"防御胜率={cell['defense_win_rate']:.4f}  "
+                  f"注入有效={cell['injection_success_rate']:.3f}  "
+                  f"平均调用={cell['mean_tool_calls']}")
     if "attack_qualify_win_rate_vs_nodefense" in result:
         print("-" * 70)
-        print(f"攻击资格口径（面对 NoDefense）攻击胜率: "
-              f"{result['attack_qualify_win_rate_vs_nodefense']:.4f}")
-        print(f"攻击面对防御 Baseline 的攻击胜率: "
-              f"{result['attack_win_rate_vs_baseline_defense']:.4f}")
-        print(f"空注入（NoOp）攻击胜率（应≈0）: "
-              f"{result['noop_attack_win_rate_sanity']:.4f}")
+        if config.is_en:
+            print(f"Attack qualify win rate (vs NoDefense): "
+                  f"{result['attack_qualify_win_rate_vs_nodefense']:.4f}")
+            print(f"Attack win rate vs Baseline Defense: "
+                  f"{result['attack_win_rate_vs_baseline_defense']:.4f}")
+            print(f"NoOp attack win rate (should be ~0): "
+                  f"{result['noop_attack_win_rate_sanity']:.4f}")
+        else:
+            print(f"攻击资格口径（面对 NoDefense）攻击胜率: "
+                  f"{result['attack_qualify_win_rate_vs_nodefense']:.4f}")
+            print(f"攻击面对防御 Baseline 的攻击胜率: "
+                  f"{result['attack_win_rate_vs_baseline_defense']:.4f}")
+            print(f"空注入（NoOp）攻击胜率（应≈0）: "
+                  f"{result['noop_attack_win_rate_sanity']:.4f}")
     if "false_positive_rate" in result:
         print("-" * 70)
-        print(f"误伤率 = {result['faulty_calls']}/{result['legal_calls']} = "
-              f"{result['false_positive_rate']:.4f}  (资格线 ≤ {result['fpr_gate']:.0%})  "
-              f"-> 资格判定: {'通过' if result['qualification_pass'] else '不通过'}")
-        print(f"防御面对 Baseline 攻击的防御胜率: "
-              f"{result['defense_win_rate_vs_baseline_attack']:.4f}")
-        print(f"防御面对空注入的防御胜率: {result['defense_win_rate_vs_noop']:.4f}")
+        if config.is_en:
+            print(f"FalsePositiveRate = {result['faulty_calls']}/{result['legal_calls']} = "
+                  f"{result['false_positive_rate']:.4f}  (Gate <= {result['fpr_gate']:.0%})  "
+                  f"-> Qualification: {'Pass' if result['qualification_pass'] else 'Fail'}")
+            print(f"Defense win rate vs Baseline Attack: "
+                  f"{result['defense_win_rate_vs_baseline_attack']:.4f}")
+            print(f"Defense win rate vs NoOp: {result['defense_win_rate_vs_noop']:.4f}")
+        else:
+            print(f"误伤率 = {result['faulty_calls']}/{result['legal_calls']} = "
+                  f"{result['false_positive_rate']:.4f}  (资格线 ≤ {result['fpr_gate']:.0%})  "
+                  f"-> 资格判定: {'通过' if result['qualification_pass'] else '不通过'}")
+            print(f"防御面对 Baseline 攻击的防御胜率: "
+                  f"{result['defense_win_rate_vs_baseline_attack']:.4f}")
+            print(f"防御面对空注入的防御胜率: {result['defense_win_rate_vs_noop']:.4f}")
     print(line)
 
 
@@ -532,10 +565,14 @@ if __name__ == "__main__":
     parser.add_argument("--judge", choices=["mock", "api"], default="mock",
                         help="mock=确定性规则 Agent 模拟器（无需 API）；"
                              "api=真实大模型 Agent（OpenAI 兼容端点，交互式输入连接信息）")
+    parser.add_argument("--lang", default="cn")
     parser.add_argument("--matches", type=int, default=20, help="攻防对阵场数")
     parser.add_argument("--seed", type=int, default=42, help="随机种子")
     parser.add_argument("--output", default="results/metrics.json")
     args = parser.parse_args()
+
+    config.is_en = args.lang == 'en'
+    # print("Output in en" if config.is_en else "Output Chinese")
 
     res = evaluate(stage=args.stage, judge_mode=args.judge,
                    n_matches=args.matches, seed=args.seed, output=args.output)
@@ -544,4 +581,4 @@ if __name__ == "__main__":
     os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
     with open(args.output, "w", encoding="utf-8") as fh:
         json.dump(res, fh, ensure_ascii=False, indent=2)
-    print(f"\n[test] 指标已保存: {args.output}")
+    print(f"\n[test] Metrics saved: {args.output}" if config.is_en else f"\n[test] 指标已保存: {args.output}")

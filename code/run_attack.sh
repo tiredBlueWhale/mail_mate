@@ -16,6 +16,8 @@ cd "$(dirname "$0")"
 
 # 指定解释器：默认 python，可用 PYTHON 环境变量覆盖
 PY="${PYTHON:-python}"
+USE_API="${USE_API:-N}"
+LANG_CODE="${LANG_CODE:-en}"
 
 echo ">>> [run_attack] 攻击方 Baseline 评测（IdentityImpersonationAttack）"
 read -rp "使用真实大模型 Agent API 评测？[y/N] " USE_API
