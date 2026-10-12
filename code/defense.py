@@ -75,7 +75,7 @@ import re
 
 # Custom imports
 from config import config
-from logger import log, fmt, LogLevel
+from logger import log, LogLevel
 
 _READ_TOOLS = ("search_emails", "get_unread_emails", "get_received_emails")
 
@@ -137,6 +137,8 @@ def defend(env, stage: str, tool_name: str, tool_input: dict, tool_output, call_
     if isinstance(call_history, str):
         call_history = json.loads(call_history)
     log(json.dumps(call_history, ensure_ascii=False, indent=2))
+
+    return False
     
     if stage == "post":
         return True
