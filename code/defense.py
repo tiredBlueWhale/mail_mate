@@ -87,6 +87,28 @@ def _read_text(call_history: list) -> str:
         str(c["output"]) for c in call_history if c["tool"] in _READ_TOOLS
     )
 
+def _log_defense(env, stage: str, tool_name: str, tool_input: dict, tool_output, call_history: list):
+    # if getattr(config, "log_heading_defense", False):
+    #     log(f"{'stage':<6} | {'tool_name':<20} | {'tool_input':<40} | {'tool_output':<40}")
+    #     log("-" * 6 + "-+-" + "-" * 20 + "-+-" + "-" * 40 + "-+-" + "-" * 40)
+    #     config.log_heading_defense = False
+    
+    log('\n' + "=" * 69)
+    log(f"{'=' * 16} {vars(env)} {'='*24}")
+    log(f"{'=' * 16} {stage:<4} | {tool_name:<20}{'='*24}")
+    log(f"{'=' * 24} {'tool_input'} {'='*24}")
+    log(json.dumps(tool_input, ensure_ascii=False, indent=2))
+
+    log(f"{'=' * 24} {'tool_output'} {'='*24}")
+    if isinstance(tool_output, str):
+        tool_output = json.loads(tool_output)
+    log(json.dumps(tool_output, ensure_ascii=False, indent=2))
+
+    log(f"{'=' * 24} {'call_history'} {'='*24}")
+    if isinstance(call_history, str):
+        call_history = json.loads(call_history)
+    log(json.dumps(call_history, ensure_ascii=False, indent=2))
+
 def defend(env, stage: str, tool_name: str, tool_input: dict, tool_output, call_history: list):
     """收件人来源校验中介（RecipientSourceGuard）。
     Recipient Source Validation Mediator (RecipientSourceGuard).
@@ -118,34 +140,19 @@ def defend(env, stage: str, tool_name: str, tool_input: dict, tool_output, call_
     post stage: True or None=return as-is / False=clear / same type value=sanitized rewrite.
     """
 
-    if getattr(config, "log_heading_defense", False):
-        log(f"{'stage':<6} | {'tool_name':<20} | {'tool_input':<40} | {'tool_output':<40}")
-        log("-" * 6 + "-+-" + "-" * 20 + "-+-" + "-" * 40 + "-+-" + "-" * 40)
-        config.log_heading_defense = False
+    # _log_defense(env, stage, tool_name, tool_input, tool_output, call_history)
+
+    # return False
     
-    log('\n' + "=" * 69)
-    log(f"{'=' * 16} {stage:<4} | {tool_name:<20}{'='*24}")
-    log(f"{'=' * 24} {'tool_input'} {'='*24}")
-    log(json.dumps(tool_input, ensure_ascii=False, indent=2))
+    # if stage == "post":
+    #     return True
 
-    log(f"{'=' * 24} {'tool_output'} {'='*24}")
-    if isinstance(tool_output, str):
-        tool_output = json.loads(tool_output)
-    log(json.dumps(tool_output, ensure_ascii=False, indent=2))
-
-    log(f"{'=' * 24} {'call_history'} {'='*24}")
-    if isinstance(call_history, str):
-        call_history = json.loads(call_history)
-    log(json.dumps(call_history, ensure_ascii=False, indent=2))
-
-    return False
     
-    if stage == "post":
-        return True
-
     if tool_name == "send_email":
+        log("=" * 10 + "\n")
         recipients = tool_input.get("recipients") or []
         read_text = _read_text(call_history)
+        log(recipients)
         for r in recipients:
             r = str(r)
             if r and r in read_text:
