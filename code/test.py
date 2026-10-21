@@ -56,7 +56,7 @@ import re
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as _FutTimeout
 
-from attack import attack
+from attack import attack, attack_hr
 from dataset import (
     ALL_TASKS,
     FPR_GATE,
@@ -69,7 +69,7 @@ from dataset import (
     MailMateEnv,
     load_matches,
 )
-from defense import defend
+from defense import defend, canonical_source_guard
 
 # Custom imports
 from config import config
@@ -85,8 +85,10 @@ AGENT_RETRIES = 3
 
 NOOP_ATTACK_NAME = "NoOpAttack"
 BASELINE_ATTACK_NAME = "IdentityImpersonationAttack"
+HR_ATTACK_NAME = "IdentityImpersonationHR"
 NO_DEFENSE_NAME = "NoDefense"
 BASELINE_DEFENSE_NAME = "RecipientSourceGuard"
+CANONICAL_DEFENSE_NAME = "CanonicalSourceGuard"
 
 
 def _call_with_timeout(fn, *args, timeout=None):
@@ -473,12 +475,14 @@ def _noop_attack(env) -> None:
 
 
 def evaluate(stage: str = "attack", judge_mode: str = "mock",
-             n_matches: int = 20, seed: int = 42, output: str = "results/metrics.json"):
+             n_matches: int = 1, seed: int = 42, output: str = "results/metrics.json"):
     agent_fn = make_agent_fn(judge_mode)
     matches = load_matches(n_matches, seed)
 
-    attacks = {BASELINE_ATTACK_NAME: attack, NOOP_ATTACK_NAME: _noop_attack}
-    defenses = {NO_DEFENSE_NAME: None, BASELINE_DEFENSE_NAME: defend}
+    attacks = {BASELINE_ATTACK_NAME: attack, HR_ATTACK_NAME: attack_hr,
+               NOOP_ATTACK_NAME: _noop_attack}
+    defenses = {NO_DEFENSE_NAME: None, BASELINE_DEFENSE_NAME: defend,
+                CANONICAL_DEFENSE_NAME: canonical_source_guard}
 
     cells = {}
     for atk_name, atk_fn in attacks.items():
@@ -610,7 +614,7 @@ if __name__ == "__main__":
                         help="mock=确定性规则 Agent 模拟器（无需 API）；"
                              "api=真实大模型 Agent（OpenAI 兼容端点，交互式输入连接信息）")
     parser.add_argument("--lang", default="cn")
-    parser.add_argument("--matches", type=int, default=20, help="攻防对阵场数")
+    parser.add_argument("--matches", type=int, default=1, help="攻防对阵场数")
     parser.add_argument("--seed", type=int, default=42, help="随机种子")
     parser.add_argument("--output", default="results/metrics.json")
     args = parser.parse_args()

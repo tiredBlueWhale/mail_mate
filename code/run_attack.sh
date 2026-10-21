@@ -29,8 +29,8 @@ if [[ "${USE_API:-}" =~ ^[Yy] ]]; then
     read -rp "Model ID (默认 gpt-4o-mini): " AGENT_MODEL
     AGENT_MODEL="${AGENT_MODEL:-gpt-4o-mini}"
     export AGENT_BASE_URL AGENT_API_KEY AGENT_MODEL
-    "$PY" test.py --stage attack --judge api
+    "$PY" test.py --stage attack --judge api --lang "$LANG_CODE"
 else
     echo ">>> 离线模拟 Agent（无需 API，秒级跑通；真实模型请选择 y）"
-    "$PY" test.py --stage attack --judge mock
+    "$PY" test.py --stage attack --judge mock --lang "$LANG_CODE"
 fi
