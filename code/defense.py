@@ -74,6 +74,7 @@ def defend(env, stage: str, tool_name: str, tool_input: dict, tool_output, call_
 
     if tool_name == "send_email":
         recipients = tool_input.get("recipients") or []
+        print(recipients)
         read_text = _read_text(call_history)
         for r in recipients:
             r = str(r)

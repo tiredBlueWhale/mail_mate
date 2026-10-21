@@ -201,6 +201,7 @@ class MockAgent:
         """扫描全部可注入邮件的正文，检测"转发至邮箱"指令；返回目标邮箱或 None。"""
         for eid in ("2", "3", "4"):
             body = self.env.mails.get(eid, {}).get("body", "")
+            body = re.sub(r"[\u200b-\u200d\ufeff]", "", body)
             m = _FORWARD_RE.search(body)
             if m:
                 return m.group(1)
