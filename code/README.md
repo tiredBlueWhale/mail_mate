@@ -7,8 +7,10 @@
 | 文件 | 职责 |
 |---|---|
 | `dataset.py` | 基准场景数据：收件箱 4 封固定邮件（邮件 1 含验证码 463820 不可注入，邮件 2/3/4 含 `[INJECT]`）、基线 Agent 系统提示与工具定义、基线任务集（8 公开 + 8 隐藏）、攻防对阵集（20 场，seed 42）；评测环境 `MailMateEnv`（`env.set_email` 含单一来源/身份一致校验、工具集、防御中介接入、胜负判定） |
-| `attack.py` | 攻击 Baseline：部门身份冒充注入（IdentityImpersonationAttack），`attack(env)` 以 IT 部门身份向邮件 2 写入"转发验证码至攻击者邮箱"的正式安全通知 |
-| `defense.py` | 防御 Baseline：收件人来源校验中介（RecipientSourceGuard），`defend(...)` 阻断"收件人仅来自不可信邮件内容"的 `send_email` 调用 |
+| `attack_upload.py` | 攻击技术（上传版）：每个技术一个函数（如 `it_department_impersonation` / `hr_department_impersonation` / `project_group_impersonation`），统一入口 `attack(env)` 调用其一（可注释切换） |
+| `attack.py` | 攻击方 CLI 自测入口：读对阵集、运行 `attack_upload.attack(env)`、保存注入内容（技术实现见 `attack_upload.py`） |
+| `defense_upload.py` | 防御技术（上传版）：每个技术一个函数（`recipient_source_guard` / `canonical_source_guard`），统一入口 `defend(...)` 同时应用全部守卫（任一阻断即阻断） |
+| `defense.py` | 防御方 CLI 自测入口：在全部基线任务上运行 `defense_upload.defend(...)` 并统计误伤率（技术实现见 `defense_upload.py`） |
 | `test.py` | 评测入口：Agent 模拟（mock 规则模拟器 / api 真实大模型）→ 攻防对阵 → 指标计算；`--stage attack\|defense\|all`、`--judge mock\|api` |
 | `run_attack.sh` / `run_defense.sh` | 终端脚本：**交互式配置**真实大模型 Agent API 或选择离线模拟模式 |
 | `requirements.txt` | 最小依赖：mock 模式零第三方依赖；真实 API 模式需要 `openai` |

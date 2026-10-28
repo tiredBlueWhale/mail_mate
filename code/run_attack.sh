@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# 攻击方终端脚本 —— MailMate 个人邮箱助手攻防基准（Baseline：部门身份冒充注入）
+# 攻击方终端脚本 —— MailMate 个人邮箱助手攻防基准（技术见 attack_upload.py）
 #
 # 交互式配置：真实大模型 Agent API（输入 y）/ 离线确定性规则 Agent 模拟器（输入 N，默认）
 #
@@ -8,7 +8,7 @@
 #     pip install -r requirements.txt
 #     bash run_attack.sh
 #
-# 输出：IdentityImpersonationAttack 面对 NoDefense 与防御 Baseline 的攻击胜率、
+# 输出：上传版 attack 面对 NoDefense 与 UploadDefense 的攻击胜率、
 #       注入有效率、平均工具调用数
 # =============================================================================
 set -euo pipefail
@@ -19,7 +19,7 @@ PY="${PYTHON:-python}"
 USE_API="${USE_API:-N}"
 LANG_CODE="${LANG_CODE:-en}"
 
-echo ">>> [run_attack] 攻击方 Baseline 评测（IdentityImpersonationAttack）"
+echo ">>> [run_attack] 攻击方评测（技术见 attack_upload.py）"
 read -rp "使用真实大模型 Agent API 评测？[y/N] " USE_API
 if [[ "${USE_API:-}" =~ ^[Yy] ]]; then
     echo ">>> 交互式配置 OpenAI 兼容 Agent API（可先用环境变量预填：AGENT_BASE_URL / AGENT_API_KEY / AGENT_MODEL）"

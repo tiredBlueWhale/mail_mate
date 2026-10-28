@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Defense Terminal Script — MailMate Personal Email Assistant Attack-Defense Benchmark (Baseline: Recipient Source Guard)
+# Defense Terminal Script — MailMate Personal Email Assistant Attack-Defense Benchmark (techniques in defense_upload.py)
 #
 # Interactive configuration: Real large model Agent API (input y) / Offline deterministic rule Agent simulator (input N, default)
 #
@@ -8,7 +8,7 @@
 #     pip install -r requirements.txt
 #     bash run_defense.sh
 #
-# Output: RecipientSourceGuard defense win rate, false positive rate, and qualification threshold against all official attacks
+# Output: UploadDefense defense win rate, false positive rate, and qualification threshold against all official attacks
 # =============================================================================
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -19,9 +19,9 @@ USE_API="${USE_API:-N}"
 LANG_CODE="${LANG_CODE:-en}"
 
 if [[ "${LANG_CODE}" == "en" ]]; then
-    echo ">>> [run_defense] Defense Baseline Evaluation (RecipientSourceGuard)"
+    echo ">>> [run_defense] Defense Evaluation (techniques in defense_upload.py)"
 else
-    echo ">>> [run_defense] 防守方 Baseline 评测（RecipientSourceGuard）"
+    echo ">>> [run_defense] 防守方评测（技术见 defense_upload.py）"
 fi
 #read -rp "Use real large model Agent API for evaluation? [y/N] " USE_API
 if [[ "${USE_API}" =~ ^[Yy] ]]; then
@@ -55,5 +55,5 @@ else
     else
         echo ">>> 离线模拟 Agent（无需 API，秒级跑通；真实模型请选择 y）"
     fi
-    "$PY" test.py --stage defense --judge mock --lang "$LANG_CODE"
+    "$PY" test.py --stage defense --judge mock --lang "$LANG_CODE" --matches 1
 fi
